@@ -1,0 +1,550 @@
+swagger: "2.0"
+info:
+  title: Payment Service API
+  version: "1.0"
+host: localhost:8080
+basePath: /
+schemes:
+  - http
+  - https
+tags:
+  - name: Admin
+    description: Admin endpoints
+paths:
+  /v1/ping:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Pong response
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+  /v1/admin/ping:
+    get:
+      tags:
+        - Admin
+      summary: Admin health check
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Pong response
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+  /v1/admin/register:
+    post:
+      tags:
+        - Admin
+      summary: Register admin
+      security:
+        - basicAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              username:
+                type: string
+              password:
+                type: string
+      responses:
+        '201':
+          description: Admin registered
+  /v1/callback/{vendorcode}/payment:
+    get:
+      summary: Payment callback
+      parameters:
+        - in: path
+          name: vendorcode
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Callback received
+  /v1/callback/{vendorcode}/notification:
+    post:
+      summary: Payment notification
+      parameters:
+        - in: path
+          name: vendorcode
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+      responses:
+        '200':
+          description: Notification processed
+  /v1/pg/ping:
+    get:
+      summary: PG health check
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Pong response
+  /v1/pg/create-pg-vendor:
+    post:
+      summary: Create payment gateway vendor
+      security:
+        - basicAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              vendor:
+                type: string
+                description: Vendor name (e.g., midtrans, xendit, hitpay, doku)
+              gateway_name:
+                type: string
+                description: Name of the payment gateway
+              api_key:
+                type: string
+                description: API key for the vendor
+              api_secret:
+                type: string
+                description: API secret for the vendor
+              merchant_id:
+                type: string
+                description: Merchant ID
+              callback_url:
+                type: string
+                description: Callback URL
+              callback_redirect:
+                type: integer
+                description: Callback redirect flag
+              mode:
+                type: string
+                description: Mode (e.g., sandbox, production)
+            required:
+              - vendor
+              - gateway_name
+              - api_key
+      responses:
+        '201':
+          description: Vendor created
+  /v1/pg/get-pg-vendor/{code}:
+    get:
+      summary: Get payment gateway vendor
+      security:
+        - basicAuth: []
+      parameters:
+        - in: path
+          name: code
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Vendor details
+  /v1/pg/get-all-pg-vendor:
+    get:
+      summary: Get all payment gateway vendors
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: List of vendors
+  /v1/pg/update-pg-vendor/{code}:
+    put:
+      summary: Update payment gateway vendor
+      security:
+        - basicAuth: []
+      parameters:
+        - in: path
+          name: code
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              gateway_name:
+                type: string
+                description: Name of the payment gateway
+              api_key:
+                type: string
+                description: API key for the vendor
+              api_secret:
+                type: string
+                description: API secret for the vendor
+              merchant_id:
+                type: string
+                description: Merchant ID
+              callback_url:
+                type: string
+                description: Callback URL
+              callback_redirect:
+                type: integer
+                description: Callback redirect flag
+              mode:
+                type: string
+                description: Mode (e.g., sandbox, production)
+            required:
+              - gateway_name
+              - api_key
+      responses:
+        '200':
+          description: Vendor updated
+  /v1/pg/delete-pg-vendor/{code}:
+    delete:
+      summary: Delete payment gateway vendor
+      security:
+        - basicAuth: []
+      parameters:
+        - in: path
+          name: code
+          required: true
+          type: string
+      responses:
+        '204':
+          description: Vendor deleted
+  /v1/pg/vendor/{vendorcode}/create-payment-request:
+    post:
+      summary: Create payment request
+      security:
+        - basicAuth: []
+      parameters:
+        - in: path
+          name: vendorcode
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              order_id:
+                type: string
+                description: Order ID (optional, autogenerated if empty)
+              amount:
+                type: integer
+                description: Payment amount
+              items:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    price:
+                      type: integer
+                    quantity:
+                      type: integer
+                    brand:
+                      type: string
+                    category:
+                      type: string
+              customer:
+                type: object
+                properties:
+                  first_name:
+                    type: string
+                  last_name:
+                    type: string
+                  email:
+                    type: string
+                  phone:
+                    type: string
+                  billing:
+                    $ref: '#/definitions/Address'
+                  shipping:
+                    $ref: '#/definitions/Address'
+              enabled_payments:
+                type: array
+                items:
+                  type: string
+              callbacks:
+                type: object
+                properties:
+                  finish:
+                    type: string
+              expiry:
+                type: object
+                properties:
+                  start_time:
+                    type: string
+                  unit:
+                    type: string
+                  duration:
+                    type: integer
+              custom_fields:
+                type: object
+                additionalProperties:
+                  type: string
+              metadata:
+                type: object
+                additionalProperties:
+                  type: string
+            required:
+              - amount
+      responses:
+        '201':
+          description: Payment request created
+  /v1/pg/vendor/{vendorcode}/get-payment-status:
+    get:
+      summary: Get payment status
+      security:
+        - basicAuth: []
+      parameters:
+        - in: path
+          name: vendorcode
+          required: true
+          type: string
+          description: Vendor code
+        - in: query
+          name: order_id
+          required: false
+          type: string
+          description: Order ID to filter (can be repeated)
+        - in: query
+          name: start_date
+          required: false
+          type: string
+          description: Start date (YYYY-MM-DD)
+        - in: query
+          name: end_date
+          required: false
+          type: string
+          description: End date (YYYY-MM-DD)
+      responses:
+        '200':
+          description: Payment status
+securityDefinitions:
+  basicAuth:
+    type: basic
+definitions:
+  Address:
+    type: object
+    properties:
+      first_name:
+        type: string
+      last_name:
+        type: string
+      email:
+        type: string
+      phone:
+        type: string
+      address:
+        type: string
+      city:
+        type: string
+      postal_code:
+        type: string
+      country_code:
+        type: string
+  RegisterRequest:
+    type: object
+    required:
+      - username
+      - password
+    properties:
+      username:
+        type: string
+      password:
+        type: string
+  PaymentGatewayCredentialRequest:
+    type: object
+    required:
+      - vendor
+      - gateway_name
+      - api_key
+    properties:
+      vendor:
+        type: string
+      gateway_name:
+        type: string
+      api_key:
+        type: string
+      api_secret:
+        type: string
+      merchant_id:
+        type: string
+      callback_url:
+        type: string
+      callback_redirect:
+        type: integer
+      mode:
+        type: string
+  PaymentGatewayCredentialUpdateRequest:
+    type: object
+    required:
+      - gateway_name
+      - api_key
+    properties:
+      gateway_name:
+        type: string
+      api_key:
+        type: string
+      api_secret:
+        type: string
+      merchant_id:
+        type: string
+      callback_url:
+        type: string
+      callback_redirect:
+        type: integer
+      mode:
+        type: string
+  PaymentItem:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      price:
+        type: integer
+      quantity:
+        type: integer
+      brand:
+        type: string
+      category:
+        type: string
+  CustomerInfo:
+    type: object
+    properties:
+      first_name:
+        type: string
+      last_name:
+        type: string
+      email:
+        type: string
+      phone:
+        type: string
+      billing:
+        $ref: '#/definitions/Address'
+      shipping:
+        $ref: '#/definitions/Address'
+  CallbackURLs:
+    type: object
+    properties:
+      finish:
+        type: string
+  PaymentExpiry:
+    type: object
+    properties:
+      start_time:
+        type: string
+      unit:
+        type: string
+      duration:
+        type: integer
+  PaymentRequest:
+    type: object
+    properties:
+      order_id:
+        type: string
+      amount:
+        type: integer
+      items:
+        type: array
+        items:
+          $ref: '#/definitions/PaymentItem'
+      customer:
+        $ref: '#/definitions/CustomerInfo'
+      enabled_payments:
+        type: array
+        items:
+          type: string
+      callbacks:
+        $ref: '#/definitions/CallbackURLs'
+      expiry:
+        $ref: '#/definitions/PaymentExpiry'
+      custom_fields:
+        type: object
+        additionalProperties:
+          type: string
+      metadata:
+        type: object
+        additionalProperties:
+          type: string
+  MidtransNotificationStruct:
+    type: object
+    properties:
+      transaction_time:
+        type: string
+      transaction_status:
+        type: string
+      transaction_id:
+        type: string
+      status_message:
+        type: string
+      status_code:
+        type: string
+      signature_key:
+        type: string
+      settlement_time:
+        type: string
+      payment_type:
+        type: string
+      order_id:
+        type: string
+      merchant_id:
+        type: string
+      gross_amount:
+        type: string
+      fraud_status:
+        type: string
+      currency:
+        type: string
+  PMS_ItemDetail:
+    type: object
+    properties:
+      item_code:
+        type: string
+      name:
+        type: string
+      currency:
+        type: string
+      price:
+        type: number
+        format: float
+      quantity:
+        type: integer
+      description:
+        type: string
+  PMS_Order:
+    type: object
+    properties:
+      order_code:
+        type: string
+      currency:
+        type: string
+      amount:
+        type: number
+        format: float
+      expires_at:
+        type: string
+      item_detail:
+        type: array
+        items:
+          $ref: '#/definitions/PMS_ItemDetail'
+  PMS_Request:
+    type: object
+    properties:
+      pg_code:
+        type: string
+      pg_username:
+        type: string
+      pg_password:
+        type: string
+      detail:
+        $ref: '#/definitions/PMS_Order'

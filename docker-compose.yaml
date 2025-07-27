@@ -1,0 +1,66 @@
+services:
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: nginx.Dockerfile
+    container_name: nginx-proxy
+    ports:
+      - "8080:8080"
+    depends_on:
+      - pgbv1.0.0
+      - swagger-ui
+    networks:
+      - pgbridgenet
+  swagger-ui:
+    build:
+      context: ./swagger
+      dockerfile: Dockerfile
+    container_name: swagger-ui
+    environment:
+      - SWAGGER_JSON=/swagger.yaml
+      - URL=/swagger.yaml
+    networks:
+      - pgbridgenet
+  pgbv1.0.0:
+    container_name: pgbv1.0.0
+    build:
+      context: ./src
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - CGO_ENABLED=0
+      - PORT=5000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=pguser
+      - DB_PASSWORD=pgpassword
+      - DB_NAME=pgdb
+    restart: always
+    volumes:
+      - ./src:/app
+    networks:
+      - pgbridgenet
+
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=pguser
+      - POSTGRES_PASSWORD=pgpassword
+      - POSTGRES_DB=pgdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - pgbridgenet
+
+networks:
+  pgbridgenet:
+    driver: bridge
+
+volumes:
+  pgdata:
